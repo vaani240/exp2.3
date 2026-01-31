@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SVG Drawing Tool with Undo</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .toolbar {
+        margin: 10px;
+    }
+
+    button {
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    svg {
+        width: 90vw;
+        height: 75vh;
+        border: 2px solid #333;
+        background: white;
+        cursor: crosshair;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>SVG Freehand Drawing Tool</h2>
+
+<div class="toolbar">
+    <button onclick="undo()">Undo</button>
+</div>
+
+<svg id="svgCanvas"></svg>
+
+<script>
+    const svg = document.getElementById("svgCanvas");
+
+    let drawing = false;
+    let path = null;
+    let history = [];   // Stores drawn paths
+
+    function getMousePosition(evt) {
+        const point = svg.createSVGPoint();
+        point.x = evt.clientX;
+        point.y = evt.clientY;
+        return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    svg.addEventListener("mousedown", (e) => {
+        drawing = true;
+        const pos = getMousePosition(e);
+
+        path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", `M ${pos.x} ${pos.y}`);
+        path.setAttribute("stroke", "black");
+        path.setAttribute("stroke-width", 2);
+        path.setAttribute("fill", "none");
+
+        svg.appendChild(path);
+        history.push(path); // save for undo
+    });
+
+    svg.addEventListener("mousemove", (e) => {
+        if (!drawing) return;
+
+        const pos = getMousePosition(e);
+        path.setAttribute(
+            "d",
+            path.getAttribute("d") + ` L ${pos.x} ${pos.y}`
+        );
+    });
+
+    svg.addEventListener("mouseup", () => {
+        drawing = false;
+        path = null;
+    });
+
+    svg.addEventListener("mouseleave", () => {
+        drawing = false;
+        path = null;
+    });
+
+    function undo() {
+        const last = history.pop();
+        if (last) {
+            svg.removeChild(last);
+        }
+    }
+</script>
+
+</body>
+</html>
